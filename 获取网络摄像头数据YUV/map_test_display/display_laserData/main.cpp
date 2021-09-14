@@ -144,6 +144,43 @@ bool udp_piece_cut(string ALL_data, std::vector<string>& pieces)
 	return true;
 }
 
+void sendPieces( int sock_fd, SOCKADDR_IN addr_client, int len2, std::string &basedStr)
+{
+	unsigned char head[8];
+	int length = basedStr.size();
+	cout << "data size = " << length << endl;
+	head[0] = 'L';
+	head[1] = 'E';
+	head[2] = 'N';
+	head[3] = 'G';
+	memcpy(&head[4], &length, 4);
+	if (sendto(sock_fd, (char *)head, 8, 0, (sockaddr*)&addr_client, len2) != SOCKET_ERROR) {
+		cout << "发送头消息" << endl;
+	}
+
+	bool result = false;
+	std::vector<string> pieces;
+	// 发送base64字节流,如果大于50000字节则分片发送
+	if (basedStr.size() > 50000) {
+		result = udp_piece_cut(basedStr, pieces);
+	}
+	if (result) {//分片
+		for (uchar i = 0; i < pieces.size(); i++) {
+			const char* sendbuf = pieces[i].c_str();
+
+			if (sendto(sock_fd, sendbuf, strlen(sendbuf), 0, (sockaddr*)&addr_client, len2) != SOCKET_ERROR) {
+				cout << "分片发送成功" << endl;
+			}
+		}
+	}
+	else {//不分片
+		const char* sendbuf = basedStr.c_str();
+		if (sendto(sock_fd, sendbuf, strlen(sendbuf), 0, (sockaddr*)&addr_client, len2) != SOCKET_ERROR)
+		{
+			cout << "不分片发发送成功" << endl;
+		}
+	}
+}
 
 int main()
 {
