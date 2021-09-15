@@ -38,11 +38,40 @@ void MyPainter::drawACar(int x, int y)
     paint.drawRect(x, y, 35, 45);
 }
 
-void MyPainter::startUDPServer()
+void MyPainter::startUDPReceiver()
 {
     qDebug()<<"start a Udp Server ..."<<endl;
 
+    quint16 local_port = 2334;
+    udp_server = new QUdpSocket(this);
 
+    //int ret = udp_server->bind( local_port, QUdpSocket::ShareAddress );
+    int ret = udp_server->bind( QHostAddress("192.168.22.69"), local_port );
+    if( ret < 0 ){
+        qDebug() <<"start the udp server failed ..."<<endl;
+    }
+
+    connect(udp_server, SIGNAL(readyRead()), this, SLOT(udpServerReceiveData()));
 }
 
+void MyPainter::closeUDPReceiver()
+{
+    this->udp_server->close();
+    qDebug() <<"close the udp server ..."<<endl;
+}
 
+void MyPainter::udpServerReceiveData()
+{
+    QByteArray recvBuff;
+    while( udp_server->hasPendingDatagrams() ){
+        qDebug()<<"received length: "<<udp_server->pendingDatagramSize()<<endl;
+
+        // Allocate the memory for the coming image
+        recvBuff.resize( udp_server->pendingDatagramSize() );
+
+        // Received the Data sent from the client
+        udp_server->readDatagram(recvBuff.data(), recvBuff.size(), &client_address, &client_port);
+
+
+    }
+}

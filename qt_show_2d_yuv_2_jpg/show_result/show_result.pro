@@ -22,6 +22,7 @@ SOURCES += \
     mypainter.cpp
 
 HEADERS += \
+    dataType.h \
     mainwindow.h \
     mypainter.h
 
